@@ -58,10 +58,10 @@ const FriendProfile = ({ friendId }) => {
   };
 
   // Convertir les images en base64 et les stocker dans le localStorage
-  const handleImageChange = (imageUrl: string, type: "cover" | "profile" | "post") => {
+  const handleImageChange = (imageUrl, type) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-      const base64Image = reader.result as string;
+      const base64Image = reader.result;
       switch (type) {
         case "cover":
           localStorage.setItem("coverImage", base64Image);
@@ -76,6 +76,7 @@ const FriendProfile = ({ friendId }) => {
     };
     reader.readAsDataURL(imageUrl); // Convertir l'image en base64
   };
+  
 
   if (!isClient) return null; // Empêcher le rendu côté serveur
 
