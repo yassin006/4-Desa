@@ -1,73 +1,155 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import axios from "axios";
+
+// Définir la structure de l'objet profile
+interface Profile {
+  id: number;
+  name: string;
+  surname: string;
+  email: string;  // Added email to the profile interface
+  description: string;
+  city: string;
+  school: string;
+  work: string;
+  website: string;
+  coverImage: string;
+  profileImage: string;
+  isPublic: boolean;
+}
 
 const ProfilePage = () => {
-  const [isPublic, setIsPublic] = useState(true); // State to track the toggle
-  const [cover, setCover] = useState("/chart.png"); // State for cover image
-  const [profilePicture, setProfilePicture] = useState("/noAvatar.png"); // State for profile picture
-  const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
-  const [postImage, setPostImage] = useState(null); // State for the post image
-  const [comment, setComment] = useState(""); // State for the comment
+  const [isPublic, setIsPublic] = useState(true); // État pour suivre la visibilité
+  const [cover, setCover] = useState<string>("/chart.png"); // État pour l'image de couverture
+  const [profilePicture, setProfilePicture] = useState<string>("/noAvatar.png"); // État pour l'image de profil
+  const [isModalOpen, setIsModalOpen] = useState(false); // État pour afficher le modal
+  const [postImage, setPostImage] = useState<string | null>(null); // État pour l'image du post
+  const [comment, setComment] = useState(""); // État pour le commentaire
+  const [profile, setProfile] = useState<Profile | null>(null); // État pour les données du profil
+  const [posts, setPosts] = useState<any[]>([]); // État pour les posts
 
-  const coverInputRef = useRef(null); // Ref for cover image input
-  const profileInputRef = useRef(null); // Ref for profile picture input
-  const postImageInputRef = useRef(null); // Ref for post image input
+  const coverInputRef = useRef<HTMLInputElement | null>(null); // Réf pour l'input de l'image de couverture
+  const profileInputRef = useRef<HTMLInputElement | null>(null); // Réf pour l'input de l'image de profil
+  const postImageInputRef = useRef<HTMLInputElement | null>(null); // Réf pour l'input de l'image du post
 
-  const profile = {
-    name: "John",
-    surname: "Doe",
-    description: "A passionate developer focused on frontend technologies.",
-    city: "New York",
-    school: "XYZ University",
-    work: "Frontend Developer at TechCorp",
-    website: "https://www.johndoe.com",
-    followers: 1200, // Example followers count
-  };
+  // Récupérer les données du profil et les posts depuis le backend au montage du composant
+  useEffect(() => {
+    // Récupérer les données du profil
+    axios
+      .get("http://127.0.0.1:8000/api/profile") // Remplacer par l'endpoint réel du profil
+      .then((response) => {
+        const { data } = response;
+        setProfile(data);
+        setCover(data.coverImage || "/chart.png");
+        setProfilePicture(data.profileImage || "/noAvatar.png");
+        setIsPublic(data.isPublic);
+      })
+      .catch((error) => {
+        console.error("Erreur lors de la récupération des données du profil:", error);
+      });
 
+    // Récupérer les posts de l'utilisateur
+    axios
+      .get("http://127.0.0.1:8000/api/posts") // Remplacer par l'endpoint réel pour récupérer les posts
+      .then((response) => {
+        setPosts(response.data); // Mettre à jour l'état des posts avec les données récupérées
+      })
+      .catch((error) => {
+        console.error("Erreur lors de la récupération des posts:", error);
+      });
+  }, []);
+
+  // Basculer la visibilité du profil (public/privé)
   const toggleVisibility = () => {
-    setIsPublic(!isPublic);
+    axios
+      .post("http://127.0.0.1:8000/api/profile/toggle-visibility", { isPublic: !isPublic }) // Remplacer par votre API de bascule de visibilité
+      .then(() => {
+        setIsPublic(!isPublic); // Basculer la visibilité localement
+      })
+      .catch((error) => {
+        console.error("Erreur lors de la mise à jour de la visibilité:", error);
+      });
   };
 
-  const handleCoverChange = (event) => {
-    const file = event.target.files[0];
+  // Gérer le changement de l'image de couverture
+  const handleCoverChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]; // Obtenir le premier fichier
     if (file) {
-      const url = URL.createObjectURL(file);
-      setCover(url);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64Image = reader.result as string;
+        setCover(base64Image); // Mettre à jour l'image de couverture
+        localStorage.setItem("coverImage", base64Image); // Sauvegarder en local
+      };
+      reader.readAsDataURL(file); // Convertir l'image en base64
     }
   };
 
-  const handleProfilePictureChange = (event) => {
-    const file = event.target.files[0];
+  // Gérer le changement de l'image de profil
+  const handleProfilePictureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]; // Obtenir le premier fichier
     if (file) {
-      const url = URL.createObjectURL(file);
-      setProfilePicture(url);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64Image = reader.result as string;
+        setProfilePicture(base64Image); // Mettre à jour l'image de profil
+        localStorage.setItem("profileImage", base64Image); // Sauvegarder en local
+      };
+      reader.readAsDataURL(file); // Convertir l'image en base64
     }
   };
 
-  const handlePostImageChange = (event) => {
-    const file = event.target.files[0];
+  // Gérer le changement de l'image du post
+  const handlePostImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]; // Obtenir le premier fichier
     if (file) {
-      const url = URL.createObjectURL(file);
-      setPostImage(url);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64Image = reader.result as string;
+        setPostImage(base64Image); // Mettre à jour l'image du post
+      };
+      reader.readAsDataURL(file); // Convertir l'image en base64
     }
   };
 
+  // Soumettre un post
   const handlePostSubmit = () => {
-    console.log("Post Image:", postImage);
-    console.log("Comment:", comment);
-    setIsModalOpen(false); // Close modal after submission
-    setPostImage(null); // Clear the post image
-    setComment(""); // Clear the comment
+    const postData = {
+      user_email: profile?.email, // Utiliser l'email de l'utilisateur
+      content: comment,     // Le contenu du commentaire
+      image: postImage,     // L'image associée au post si elle existe
+    };
+
+    axios
+      .post("http://127.0.0.1:8000/api/posts", postData) // Remplacer par votre endpoint réel pour créer un post
+      .then((response) => {
+        setIsModalOpen(false); // Fermer le modal après la soumission
+        setPostImage(null); // Réinitialiser l'image du post
+        setComment(""); // Réinitialiser le commentaire
+
+        // Ajouter le nouveau post à la liste des posts
+        setPosts((prevPosts) => [
+          ...prevPosts,
+          { ...postData, created_at: new Date().toISOString() }, // Simuler une date de création
+        ]);
+      })
+      .catch((error) => {
+        console.error("Erreur lors de la création du post:", error);
+      });
   };
+
+  if (!profile) {
+    return <div>Chargement...</div>; // Afficher un message de chargement jusqu'à ce que les données du profil soient récupérées
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-2 bg-gradient-to-b from-gray-100 to-gray-50">
-      {/* Cover Image */}
+      {/* Image de couverture */}
       <div
         className="relative h-80 mb-8 rounded-lg overflow-hidden shadow-xl cursor-pointer"
-        onClick={() => coverInputRef.current.click()}
+        onClick={() => coverInputRef.current?.click()}
       >
         <Image
           src={cover}
@@ -86,10 +168,10 @@ const ProfilePage = () => {
       </div>
 
       <div className="text-center relative z-10">
-        {/* Profile Picture */}
+        {/* Image de profil */}
         <div
           className="relative inline-block mb-4 cursor-pointer"
-          onClick={() => profileInputRef.current.click()}
+          onClick={() => profileInputRef.current?.click()}
         >
           <Image
             src={profilePicture}
@@ -107,7 +189,7 @@ const ProfilePage = () => {
           />
         </div>
 
-        {/* Profile Information */}
+        {/* Informations du profil */}
         <h1 className="text-3xl font-semibold text-gray-800">
           {profile.name} {profile.surname}
         </h1>
@@ -116,16 +198,16 @@ const ProfilePage = () => {
         </p>
         <div className="text-sm text-gray-700 space-y-2">
           <p>
-            <strong className="text-gray-800">City:</strong> {profile.city}
+            <strong className="text-gray-800">Ville:</strong> {profile.city}
           </p>
           <p>
-            <strong className="text-gray-800">School:</strong> {profile.school}
+            <strong className="text-gray-800">École:</strong> {profile.school}
           </p>
           <p>
-            <strong className="text-gray-800">Work:</strong> {profile.work}
+            <strong className="text-gray-800">Travail:</strong> {profile.work}
           </p>
           <p>
-            <strong className="text-gray-800">Website:</strong>{" "}
+            <strong className="text-gray-800">Site Web:</strong>{" "}
             <a
               href={profile.website}
               target="_blank"
@@ -137,7 +219,7 @@ const ProfilePage = () => {
           </p>
         </div>
 
-        {/* Private/Public Toggle Button */}
+        {/* Bouton Public/Privé */}
         <div className="mt-4">
           <button
             onClick={toggleVisibility}
@@ -145,73 +227,87 @@ const ProfilePage = () => {
               isPublic ? "bg-green-500 text-white" : "bg-red-500 text-white"
             }`}
           >
-            {isPublic ? "Public" : "Private"}
+            {isPublic ? "Public" : "Privé"}
           </button>
         </div>
       </div>
 
-      {/* Button Section */}
-      <div className="mt-8">
+      {/* Bouton de création de post */}
+      <div className="mt-8 text-center">
         <button
-          className="w-full py-3 bg-[#6100ff] text-white font-semibold rounded-lg shadow-lg hover:bg-[#6100ff] transition duration-300 ease-in-out transform hover:scale-105"
           onClick={() => setIsModalOpen(true)}
+          className="bg-blue-500 text-white py-2 px-4 rounded-lg"
         >
-          +
+          Ajouter un post
         </button>
       </div>
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-96">
-            <h2 className="text-lg font-bold mb-4">Create a Post</h2>
-
-            {/* Post Image */}
-            <div
-              className="relative w-full h-40 bg-gray-200 rounded-lg cursor-pointer mb-4 flex items-center justify-center"
-              onClick={() => postImageInputRef.current.click()}
-            >
-              {postImage ? (
+      {/* Liste des posts */}
+      <div className="mt-8 space-y-6">
+        {posts.map((post, index) => (
+          <div key={index} className="bg-white p-4 rounded-lg shadow-lg">
+            {post.image && (
+              <div className="relative w-full h-64 mb-4 bg-gray-200 rounded-lg overflow-hidden">
                 <Image
-                  src={postImage}
-                  alt="Post"
+                  src={post.image}
+                  alt="Post Image"
                   layout="fill"
                   objectFit="cover"
                   className="rounded-lg"
                 />
-              ) : (
-                <span className="text-gray-500">Click to add a photo</span>
-              )}
-              <input
-                type="file"
-                accept="image/*"
-                ref={postImageInputRef}
-                onChange={handlePostImageChange}
-                style={{ display: "none" }}
-              />
+              </div>
+            )}
+            <p className="text-gray-700">{post.content}</p>
+            <div className="mt-2 text-gray-500 text-sm">
+              <strong>{post.user.name}</strong> -{" "}
+              {new Date(post.created_at).toLocaleString()}
             </div>
+          </div>
+        ))}
+      </div>
 
-            {/* Comment */}
+      {/* Modal pour ajouter un post */}
+      {isModalOpen && (
+        <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+          <div className="bg-white p-8 rounded-lg max-w-lg w-full">
+            <h2 className="text-2xl mb-4">Ajouter un post</h2>
             <textarea
-              placeholder="Write a comment..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg mb-4"
-            ></textarea>
-
-            {/* Submit and Cancel Buttons */}
-            <div className="flex justify-end space-x-2">
+              className="w-full p-2 border border-gray-300 rounded-lg"
+              placeholder="Écrivez votre commentaire"
+              rows={4}
+            />
+            {postImage && (
+              <div className="relative w-full h-64 mb-4 bg-gray-200 rounded-lg overflow-hidden mt-4">
+                <Image
+                  src={postImage}
+                  alt="Post Image"
+                  layout="fill"
+                  objectFit="cover"
+                  className="rounded-lg"
+                />
+              </div>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              ref={postImageInputRef}
+              onChange={handlePostImageChange}
+              className="my-4"
+            />
+            <div className="flex justify-end space-x-4">
               <button
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg"
                 onClick={() => setIsModalOpen(false)}
+                className="bg-gray-500 text-white py-2 px-4 rounded-lg"
               >
-                Cancel
+                Annuler
               </button>
               <button
-                className="px-4 py-2 bg-[#6100ff] text-white rounded-lg"
                 onClick={handlePostSubmit}
+                className="bg-blue-500 text-white py-2 px-4 rounded-lg"
               >
-                Post
+                Publier
               </button>
             </div>
           </div>

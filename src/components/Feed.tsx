@@ -1,57 +1,44 @@
-"use client"; // Directive pour indiquer que ce composant est un composant client
+"use client"; // Directive to indicate this is a client-side component
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import Image from "next/image";
 
 const Feed = () => {
-  const [selectedPost, setSelectedPost] = useState(null);
+  const [posts, setPosts] = useState<any[]>([]); // State to store posts
+  const [selectedPost, setSelectedPost] = useState<any | null>(null); // State to store selected post
 
-  const posts = [
-    {
-      id: 1,
-      image: "/chart.png",
-      user: {
-        name: "John Doe",
-        profilePic: "/noAvatar.png", // Remplace avec "noAvatar.png"
-      },
-      note: "Amazing day at the park!",
-      comments: ["Lovely!", "Looks fun!", "Where is this?"],
-    },
-    {
-      id: 2,
-      image: "/chart.png",
-      user: {
-        name: "Jane Smith",
-        profilePic: "/noAvatar.png", // Remplace avec "noAvatar.png"
-      },
-      note: "My new favorite place!",
-      comments: ["So beautiful!", "I want to visit!", "Great shot!"],
-    },
-    {
-      id: 3,
-      image: "/chart.png",
-      user: {
-        name: "Alice Brown",
-        profilePic: "/noAvatar.png", // Remplace avec "noAvatar.png"
-      },
-      note: "Throwback to this moment",
-      comments: ["Wow!", "I remember this!", "Awesome!"],
-    },
-  ];
+  // Fetch posts from API
+  const fetchPosts = async () => {
+    try {
+      const response = await axios.get("http://127.0.0.1:8000/api/posts"); // Replace with your API URL
+      setPosts(response.data); // Assuming API returns an array of posts
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    }
+  };
+
+  // Fetch posts when the component mounts
+  useEffect(() => {
+    fetchPosts();
+  }, []);
 
   const closeComments = () => setSelectedPost(null);
 
   return (
     <div className="max-w-2xl mx-auto p-4 bg-transparent backdrop-blur-md">
-      {/* Défilement vertical pour les posts */}
+      {/* Scrollable posts list */}
       <div className="space-y-6 overflow-y-auto h-[80vh] scrollbar-hide">
         {posts.map((post) => (
-          <div key={post.id} className="bg-white shadow-lg rounded-xl p-4 hover:shadow-xl transition-shadow duration-300 ease-in-out">
-            {/* En-tête du post avec la photo de profil et le nom de l'utilisateur */}
+          <div
+            key={post.id}
+            className="bg-white shadow-lg rounded-xl p-4 hover:shadow-xl transition-shadow duration-300 ease-in-out"
+          >
+            {/* Post header with user's profile picture and name */}
             <div className="sticky top-0 bg-transparent z-10 p-2 flex items-center space-x-3">
               <div className="relative w-10 h-10">
                 <Image
-                  src={post.user.profilePic}
+                  src={post.user.profilePic || "/noAvatar.png"} // Fallback if no profile picture
                   alt={post.user.name}
                   width={40}
                   height={40}
@@ -61,19 +48,24 @@ const Feed = () => {
               <p className="font-semibold text-gray-800">{post.user.name}</p>
             </div>
 
-            {/* Image de la publication */}
-            <Image
-              src={post.image}
-              alt={post.note}
-              width={500}
-              height={300}
-              className="rounded-lg object-cover transition-transform transform hover:scale-105 duration-200"
-            />
+            {/* Post image */}
+            {post.image && (
+              <Image
+                src={post.image}
+                alt={post.title}
+                width={500}
+                height={300}
+                className="rounded-lg object-cover transition-transform transform hover:scale-105 duration-200"
+              />
+            )}
 
-            {/* Note/Titre */}
-            <p className="mt-2 font-semibold text-gray-800">{post.note}</p>
+            {/* Post title */}
+            <p className="mt-2 font-semibold text-gray-800">{post.title}</p>
 
-            {/* Bouton pour les commentaires */}
+            {/* Post content */}
+            <p className="mt-2 text-gray-600">{post.content}</p>
+
+            {/* Button to view comments */}
             <button
               className="mt-4 text-blue-500 hover:underline"
               onClick={() => setSelectedPost(post)}
@@ -84,17 +76,21 @@ const Feed = () => {
         ))}
       </div>
 
-      {/* Popup pour la section de commentaires */}
+      {/* Popup for comments section */}
       {selectedPost && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-lg p-6 max-w-md w-full backdrop-blur-lg">
             <h3 className="text-lg font-bold mb-4">Commentaires</h3>
             <ul className="space-y-2">
-              {selectedPost.comments.map((comment, index) => (
-                <li key={index} className="p-2 bg-gray-100 rounded-lg">
-                  {comment}
-                </li>
-              ))}
+              {selectedPost.comments && selectedPost.comments.length > 0 ? (
+                selectedPost.comments.map((comment: string, index: number) => (
+                  <li key={index} className="p-2 bg-gray-100 rounded-lg">
+                    {comment}
+                  </li>
+                ))
+              ) : (
+                <li className="p-2 bg-gray-100 rounded-lg">Aucun commentaire</li>
+              )}
             </ul>
             <button
               className="mt-4 text-red-500 hover:underline"
