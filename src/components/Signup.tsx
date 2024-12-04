@@ -29,18 +29,17 @@ const Signup = () => {
       const response = await axios.post("http://127.0.0.1:8000/api/register", {
         name,
         email,
-        password,
+        password, // Send password
+        password_confirmation: confirmPassword, // Send password confirmation
       });
-
-      // Handle successful signup response (e.g., store token, redirect, etc.)
-      console.log("Signup successful:", response.data);
-
-      // Example: Redirect to login page after successful signup
-      window.location.href = "/signin"; // Modify as needed
+      console.log(response.data); // Log the response to check for additional details
     } catch (error: any) {
-      setError("Signup failed. Please try again.");
-      setIsLoading(false); // Stop loading when error occurs
-      console.error("Signup error:", error);
+      if (error.response) {
+        console.error("API error:", error.response.data);
+        setError(error.response.data.message || "Signup failed. Please try again.");
+      } else {
+        setError("An unknown error occurred. Please try again.");
+      }
     }
   };
 

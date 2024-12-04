@@ -1,14 +1,17 @@
 "use client";
+
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import axios from "axios";
+import { useRouter } from "next/navigation";  // To redirect after successful login
 
-const Signin = () => {
+const Signin = ({ setAuthenticated }: { setAuthenticated: React.Dispatch<React.SetStateAction<boolean>> }) => {
   const [email, setEmail] = useState(""); // State for email input
   const [password, setPassword] = useState(""); // State for password input
   const [error, setError] = useState(""); // State for error messages
   const [isLoading, setIsLoading] = useState(false); // Loading state for the button
+  const router = useRouter();
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,11 +25,14 @@ const Signin = () => {
         password,
       });
 
-      // Handle successful login response (e.g., store token, redirect, etc.)
+      // Handle successful login response
       console.log("Login successful:", response.data);
 
-      // Example: Redirect to dashboard or homepage
-      window.location.href = "/dashboard"; // Modify the redirect URL as needed
+      // Update the authentication state in Navbar
+      setAuthenticated(true);
+
+      // Redirect to dashboard or homepage
+      router.push("/dashboard");  // Modify the redirect URL as needed
     } catch (error: any) {
       setError("Invalid email or password. Please try again.");
       setIsLoading(false); // Stop loading when error occurs
@@ -91,17 +97,13 @@ const Signin = () => {
                 Forgot Password?
               </Link>
             </div>
+            {/* Sign Up Link */}
+            <div className="text-center mt-4">
+              <Link href="/signup" className="text-[#6100ff] text-sm underline">
+                Don't have an account? Sign Up
+              </Link>
+            </div>
           </form>
-          {/* Google Sign-in */}
-          <p className="text-gray-500 text-sm mt-4">or</p>
-          <button className="flex items-center justify-center gap-2 bg-white border border-gray-300 shadow py-2 px-4 rounded-lg mt-4">
-            <img src="./google.png" alt="Google icon" className="w-6 h-6" />
-            <span>Sign in with Google</span>
-          </button>
-          {/* Sign-up Link */}
-          <p className="text-gray-600 text-sm mt-4">
-            New Here? <Link href="/signup" className="text-[#fa8c00] font-semibold">Sign Up</Link>
-          </p>
         </div>
       </div>
     </div>

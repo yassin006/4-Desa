@@ -1,43 +1,23 @@
 "use client";
 
+import React, { useState } from "react";
 import Link from "next/link";
-import MobileMenu from "./MobileMenu";
 import Image from "next/image";
-import { useState, useEffect } from "react";
-import axios from "axios"; // Import Axios
+import MobileMenu from "./MobileMenu";
+import axios from "axios";
 
 const Navbar = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-
-    const checkAuth = async () => {
-      try {
-        const response = await axios.get("/api/auth/status"); // Use Axios for GET request
-        setIsAuthenticated(response.data.isAuthenticated || false);
-      } catch (error) {
-        console.error("Error checking authentication:", error);
-        setIsAuthenticated(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
 
   const handleSignOut = async () => {
     try {
-      await axios.post("/api/auth/logout"); // Use Axios for POST request
-      setIsAuthenticated(false);
-      // Redirect to homepage after sign-out
-      window.location.href = "/";
+      await axios.post("http://127.0.0.1:8000/api/logout"); // Sign out the user
+      setIsAuthenticated(false); // Update state on logout
+      window.location.href = "/"; // Redirect to homepage after sign-out
     } catch (error) {
       console.error("Error during sign-out:", error);
     }
   };
-
-  if (!isMounted) return null;
 
   return (
     <div className="h-24 flex items-center justify-between px-4 md:px-8">
