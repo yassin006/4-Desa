@@ -11,12 +11,18 @@ const Feed = () => {
   // Fetch posts from API
   const fetchPosts = async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:8000/api/posts"); // Replace with your API URL
+      const token = localStorage.getItem('token'); // Retrieve token from storage (if available)
+      const response = await axios.get("http://127.0.0.1:8000/api/posts", {
+        headers: {
+          Authorization: `Bearer ${token}`, // Include the token in the Authorization header
+        },
+      });
       setPosts(response.data); // Assuming API returns an array of posts
     } catch (error) {
       console.error("Error fetching posts:", error);
     }
   };
+  
 
   // Fetch posts when the component mounts
   useEffect(() => {
